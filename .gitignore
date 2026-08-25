@@ -1,0 +1,39 @@
+# Lỗi cục bộ
+node_modules
+dist
+dist-ssr
+*.local
+
+# Hệ điều hành
+.DS_Store
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Log
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Môi trường
+.env
+.env.local
+.env.*.local
+
+# Python ML
+ml_venv/
+__pycache__/
+*.pyc
+
+# Large model checkpoints (not served by the active pipeline)
+module3_deploy/best_model_roi.pt

@@ -1,0 +1,41 @@
+{
+  "protocols": [
+    {
+      "id": "t1-se",
+      "name": "T1 SE",
+      "sequence": "SE",
+      "description": "Spin Echo trọng số T1: TR ngắn, TE ngắn. Chất trắng sáng hơn chất xám; dịch não tủy tối.",
+      "params": { "TR": 500, "TE": 15, "TI": null, "flipAngle": 90, "matrixSize": 256 },
+      "ranges": {
+        "TR": [200, 800, 50],
+        "TE": [5, 40, 5],
+        "matrixSize": [64, 256, 64]
+      }
+    },
+    {
+      "id": "t2-tse",
+      "name": "T2 TSE",
+      "sequence": "SE",
+      "description": "Turbo Spin Echo trọng số T2: TR dài, TE dài. Dịch não tủy sáng nhất; chất xám sáng hơn chất trắng.",
+      "params": { "TR": 4000, "TE": 100, "TI": null, "flipAngle": 90, "matrixSize": 256 },
+      "ranges": {
+        "TR": [2000, 6000, 500],
+        "TE": [40, 200, 10],
+        "matrixSize": [64, 256, 64]
+      }
+    },
+    {
+      "id": "flair",
+      "name": "FLAIR",
+      "sequence": "IR",
+      "description": "Fluid-Attenuated Inversion Recovery: xung đảo với TI ≈ T1·ln2 của CSF để dọc dịch não tủy, giữ chi tiết T2 của mô đặc.",
+      "params": { "TR": 9000, "TE": 120, "TI": 2100, "flipAngle": 90, "matrixSize": 256 },
+      "ranges": {
+        "TR": [6000, 12000, 1000],
+        "TE": [60, 200, 10],
+        "TI": [1500, 3500, 100],
+        "matrixSize": [64, 256, 64]
+      }
+    }
+  ]
+}
