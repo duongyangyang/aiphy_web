@@ -216,7 +216,11 @@ def _generate_heatmap(J_grid, TR_candidates, TE_candidates,
 
 def _recommend(image_arr: np.ndarray, tr0: float, te0: float, j0: float,
                method: str, top_k: int, temperature: float) -> dict:
-    """Chạy grid scan + chọn điểm (TR*, TE*)."""
+    """Chạy grid scan + chọn điểm (TR*, TE*).
+
+    Tối ưu: trích xuất feature ảnh (ResNet18) một lần duy nhất,
+    sau đó chỉ quét tham số qua MLP nhẹ (nhanh hơn ~10-50×).
+    """
     TR_grid, TE_grid = np.meshgrid(
         TR_CANDIDATES.astype(float), TE_CANDIDATES.astype(float))
     trc_flat, tec_flat = TR_grid.ravel(), TE_grid.ravel()
@@ -234,17 +238,24 @@ def _recommend(image_arr: np.ndarray, tr0: float, te0: float, j0: float,
     ], axis=1)
     params_all = torch.tensor(params_all, dtype=torch.float32)
 
-    # Ảnh: (H, W) → (1, 1, H, W) → repeat cho batch
+    # Ảnh: (H, W) → (1, 1, H, W)
     img_tensor = torch.from_numpy(image_arr / 255.0).unsqueeze(0).to(device)
 
-    preds = np.zeros(n, dtype=np.float32)
-    batch_size = 512
-    with torch.no_grad():
+    # ── Bước 1: trích xuất feature ảnh MỘT LẦN (ResNet18 — phần nặng nhất) ──
+    batch_size = 2048
+    with torch.inference_mode():
+        img_feat = m3_model.backbone(img_tensor)  # (1, 512)
+
+        # ── Bước 2: quét tham số (MLP nhẹ — không cần ResNet18 nữa) ──
+        preds = np.zeros(n, dtype=np.float32)
         for start in range(0, n, batch_size):
             end = min(start + batch_size, n)
-            batch_img = img_tensor.unsqueeze(0).repeat(end - start, 1, 1, 1)
             batch_params = params_all[start:end].to(device)
-            pred_norm = m3_model(batch_img, batch_params).cpu().numpy()
+            feat_param = m3_model.param_mlp(batch_params)          # (B, 32)
+            # Mở rộng img_feat cho khớp batch
+            feat_img_batch = img_feat.expand(end - start, -1)      # (B, 512)
+            combined = torch.cat([feat_img_batch, feat_param], dim=1)
+            pred_norm = m3_model.head(combined).squeeze(-1).cpu().numpy()
             preds[start:end] = pred_norm * m3_j_std + m3_j_mean
 
     J_grid = preds.reshape(TE_grid.shape)
