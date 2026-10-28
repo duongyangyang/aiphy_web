@@ -1,0 +1,36 @@
+# Không gửi những thứ này vào build context — nặng và không cần cho image.
+# node_modules: image tự cài bằng `npm ci`.
+# ml_venv: image ML tự cài bằng pip.
+# dist: image tự build trong stage 1.
+node_modules
+ml_venv
+dist
+dist-ssr
+
+# Dữ liệu runtime: không bao giờ đưa database người dùng vào image.
+data
+server/data
+*.db
+*.db-wal
+*.db-shm
+
+# Môi trường và bí mật
+.env
+.env.local
+.env.*.local
+
+# Git và editor
+.git
+.gitignore
+.vscode
+.idea
+.DS_Store
+*.log
+
+# Tài liệu và file không liên quan runtime
+*.md
+!README.md
+
+# Python
+__pycache__
+*.pyc

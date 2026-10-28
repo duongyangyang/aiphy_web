@@ -515,6 +515,13 @@ export const vi: Record<string, string> = {
   "ml.loading.subtitle": "Mô hình học sâu đang chạy trên máy chủ…",
 
   // ── Module 3 — Dự đoán tham số ────────────────────────
+  // ── Module 3 & 4 — thông báo khi máy chủ tắt mô hình ───
+  "ml.disabled.eyebrow": "Chưa hỗ trợ trên máy chủ này",
+  "ml.disabled.title": "{module} — chưa chạy được mô hình",
+  "ml.disabled.body": "Máy chủ hiện tại không đủ tài nguyên phần cứng để chạy mô hình học sâu (cần thêm RAM và CPU). Đây là giới hạn của hạ tầng đang triển khai, không phải lỗi ở phía bạn.",
+  "ml.disabled.stillAvailable": "Bạn vẫn xem được toàn bộ phần lý thuyết, công thức và giao diện mô phỏng ở trang này.",
+  "ml.disabled.shortNote": "Mô hình chưa được bật trên máy chủ này — bấm nút để xem chi tiết.",
+
   "ml.m3.title": "Dự đoán tham số MRI gần tối ưu",
   "ml.m3.theoryP1": "Trong MRI lâm sàng, kỹ thuật viên phải chọn tổ hợp tham số quét \\((TR, TE, \\dots)\\) — một bài toán đánh đổi: thời gian quét ngắn thì ảnh nhiễu, thời gian dài thì bệnh nhân khó chịu. Nghiên cứu dựa trên phân tích tín hiệu và mô phỏng số chỉ ra rằng trong hệ đa mô, CNR theo TR có thể biểu hiện phụ thuộc phi tuyến phức tạp — gợi ý phương pháp giải tích truyền thống gặp hạn chế khi tối ưu đa mục tiêu.",
   "ml.m3.theoryP2": "Mô hình học sâu **MRIParamNet** (ResNet-18 cải tiến, thích ứng ảnh MRI grayscale đơn kênh) là kiến trúc đa phương thức, được huấn luyện để dự đoán hàm mục tiêu \\(J\\) cho bất kỳ cặp \\((TR, TE)\\) nào, dựa trên một ảnh MRI đã chụp ở tham số neo \\((TR_0, TE_0)\\).",

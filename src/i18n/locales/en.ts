@@ -512,6 +512,13 @@ export const en: Record<string, string> = {
   "ml.loading.subtitle": "Deep learning model running on server…",
 
   // ── Module 3 — Parameter Prediction ────────────────────
+  // ── Modules 3 & 4 — shown when the server has ML turned off ───
+  "ml.disabled.eyebrow": "Not available on this server",
+  "ml.disabled.title": "{module} — model not running",
+  "ml.disabled.body": "This server does not have enough hardware resources to run the deep-learning model (it needs more RAM and CPU). This is a limit of the current deployment, not an error on your side.",
+  "ml.disabled.stillAvailable": "You can still read all the theory, formulas and the simulation interface on this page.",
+  "ml.disabled.shortNote": "The model is not enabled on this server — click the button for details.",
+
   "ml.m3.title": "Near-optimal MRI Parameter Prediction",
   "ml.m3.theoryP1": "In clinical MRI, the technologist must choose a combination of scan parameters \\((TR, TE, \\dots)\\) — a trade-off problem: short scan time means noisy images, long scan time means patient discomfort. Signal analysis and numerical simulations show that in multi-tissue systems, CNR can exhibit complex nonlinear dependence on TR — suggesting that traditional analytical optimization methods have inherent limitations under multi-tissue objective functions.",
   "ml.m3.theoryP2": "The deep learning model **MRIParamNet** (modified ResNet-18, adapted for single-channel grayscale MRI input) is a multi-modal fusion architecture, trained to predict the objective function \\(J\\) for any \\((TR, TE)\\) pair, based on one MRI image acquired at anchor parameters \\((TR_0, TE_0)\\).",

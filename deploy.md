@@ -328,16 +328,18 @@ npm run dev:all
 
 ## 8. Triển khai VPS (có tên miền + HTTPS)
 
-Phần này dành cho khi bạn muốn đưa website lên internet để nhiều người truy cập. Website chạy trong 3 container Docker: `app` (Node + React), `ml` (Python + PyTorch), `caddy` (tự động HTTPS).
+Phần này dành cho khi bạn muốn đưa website lên internet để nhiều người truy cập. Website chạy trong 2 container Docker: `app` (Node + React) và `caddy` (tự động HTTPS). Container `ml` (Python + PyTorch) là tuỳ chọn, mặc định tắt — xem mục 8.11.
 
 ### 8.1. Cần mua gì
 
 | Thứ | Yêu cầu | Giá tham khảo |
 |-----|---------|---------------|
-| **VPS** | 2 vCPU, **4 GB RAM**, 40 GB SSD, Ubuntu 24.04 | Hetzner CX22 ~€4.5/tháng · DigitalOcean ~$12/tháng |
+| **VPS** | 2 vCPU, **2 GB RAM**, 40 GB SSD, Ubuntu 24.04 | Hetzner CX22 ~€4.5/tháng · DigitalOcean ~$12/tháng |
 | **Tên miền** | Bất kỳ (.com, .vn, .edu.vn…) | ~250.000đ/năm |
 
-> **Vì sao cần 4 GB RAM:** Module 3 và 4 load 2 model PyTorch (~60 MB weights nhưng cần thêm RAM cho inference). Với 2 GB, tiến trình ML có thể bị hệ điều hành kill giữa chừng.
+> **Bản triển khai đầu tiên không chạy mô hình học sâu.** Module 3 và Module 4 vẫn mở được, hiển thị đầy đủ lý thuyết, công thức và giao diện — nhưng khi người dùng bấm chạy mô hình, một hộp thoại hiện ra giải thích tính năng chưa được bật do giới hạn phần cứng. Nhờ vậy VPS 2 GB là đủ.
+>
+> Nếu sau này muốn bật mô hình thật, cần nâng lên **4 GB RAM** và làm theo mục 8.11.
 
 **Không cần** GPU, không cần thuê thêm database — SQLite nằm ngay trên VPS.
 
@@ -412,7 +414,7 @@ Lưu lại: `Ctrl+O`, `Enter`, `Ctrl+X`.
 docker compose up -d --build
 ```
 
-Lần đầu mất **10–20 phút** vì phải tải PyTorch và build frontend. Xem tiến trình:
+Lần đầu mất **3–6 phút** để build frontend và cài dependencies. Xem tiến trình:
 
 ```bash
 docker compose logs -f
@@ -420,7 +422,7 @@ docker compose logs -f
 
 Khi thấy dòng `server listening on http://localhost:8787` là xong. Nhấn `Ctrl+C` để thoát khỏi chế độ xem log (container vẫn chạy).
 
-Kiểm tra cả 3 service đều chạy:
+Kiểm tra cả 2 service đều chạy (`app` và `caddy`):
 
 ```bash
 docker compose ps
@@ -520,7 +522,11 @@ docker compose ps
 docker compose logs app | tail -30
 ```
 
-**Module 3/4 báo "Dịch vụ ML chưa sẵn sàng"**
+**Module 3/4 hiện hộp thoại "chưa hỗ trợ trên máy chủ này"**
+
+Đây là hành vi đúng của bản triển khai mặc định: `ML_ENABLED=false`. Nếu bạn đã nâng VPS lên 4 GB và muốn bật mô hình thật, xem mục 8.11.
+
+**Module 3/4 báo "Dịch vụ ML chưa sẵn sàng" (sau khi đã bật ML)**
 
 Container `ml` đang load model (mất 30–60 giây sau khi khởi động) hoặc bị hết RAM:
 
@@ -538,6 +544,43 @@ Nếu RAM đầy: nâng cấu hình VPS hoặc giảm `mem_limit` của service 
 **Đã đổi tên miền nhưng vẫn ra tên miền cũ**
 
 Sửa `.env` rồi `docker compose up -d` (không cần `--build`).
+
+### 8.11. Bật mô hình học sâu (Module 3 & 4) sau này
+
+Bản mặc định tắt mô hình để vừa với VPS 2 GB. Khi có điều kiện:
+
+**Bước 1 — nâng VPS lên 4 GB RAM** (trong bảng điều khiển của nhà cung cấp, thường chỉ cần bấm đổi gói rồi khởi động lại).
+
+**Bước 2 — bật cờ trong `.env`:**
+
+```bash
+nano /opt/aiphys/.env
+```
+
+Đổi `ML_ENABLED=false` thành `ML_ENABLED=true`.
+
+**Bước 3 — build và chạy thêm container ML:**
+
+```bash
+cd /opt/aiphys
+docker compose --profile ml up -d --build
+```
+
+Lần đầu mất **10–15 phút** vì tải PyTorch (~200 MB bản CPU). Kiểm tra:
+
+```bash
+docker compose ps                       # phải thấy cả app, caddy, ml
+curl -s http://localhost:8788/api/ml/health   # {"ok":true,...}
+```
+
+Sau đó vào website, mở Module 3 hoặc 4 — nút chạy mô hình hoạt động bình thường.
+
+**Tắt lại:** đổi `ML_ENABLED=false` trong `.env`, rồi:
+
+```bash
+docker compose --profile ml down
+docker compose up -d
+```
 
 ---
 

@@ -5,7 +5,10 @@
       "name": "app",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "server"],
-      "port": 8787
+      "port": 8787,
+      "env": {
+        "ML_ENABLED": "false"
+      }
     }
   ]
 }

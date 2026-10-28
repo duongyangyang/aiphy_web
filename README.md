@@ -122,7 +122,10 @@ Open **http://localhost:8787** — the Express server serves the built React app
 
 For a public deployment with a domain name and automatic HTTPS, see the
 **Triển khai VPS** chapter in [deploy.md](deploy.md) — it uses Docker Compose
-with three containers (`app`, `ml`, `caddy`).
+with two containers (`app`, `caddy`). The ML container is optional and off by
+default (`ML_ENABLED=false`): Modules 3 and 4 still render their full theory and
+UI, but pressing "run model" shows a "not supported on this server / hardware
+limit" dialog instead of calling the model.
 
 ---
 

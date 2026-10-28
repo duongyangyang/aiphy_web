@@ -107,6 +107,16 @@ app.get("/api/health", (_req, res) => {
   });
 });
 
+// ── Cấu hình công khai cho frontend ───────────────────────────────────
+// ML_ENABLED=false: Module 3/4 vẫn hiển thị (nội dung lý thuyết, giao diện)
+// nhưng nút chạy mô hình bị thay bằng thông báo "chưa hỗ trợ do giới hạn
+// phần cứng". Mặc định bật; đặt `ML_ENABLED=false` trong .env để tắt.
+const ML_ENABLED = process.env.ML_ENABLED !== "false";
+
+app.get("/api/config", (_req, res) => {
+  res.json({ mlEnabled: ML_ENABLED });
+});
+
 // ── API ───────────────────────────────────────────────────────────────
 app.use("/api/auth", authRouter);
 app.use("/api/track", trackRouter);
@@ -116,6 +126,16 @@ app.use("/api/admin", adminRouter);
 // ── Proxy /api/ml → Python ML service (bắt buộc đăng nhập) ────────────
 // Inference tốn CPU/RAM nên phải chặn sau xác thực, không để công khai.
 app.use("/api/ml", requireAuth, (req, res) => {
+  // Tắt ML: trả lỗi rõ ràng thay vì để request treo chờ kết nối tới service
+  // không tồn tại.
+  if (!ML_ENABLED) {
+    res.status(503).json({
+      error: "Tính năng mô hình học sâu chưa được bật trên máy chủ này.",
+      code: "ML_DISABLED",
+    });
+    return;
+  }
+
   const options: http.RequestOptions = {
     hostname: ML_HOST,
     port: ML_PORT,

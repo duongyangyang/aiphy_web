@@ -512,6 +512,13 @@ export const zh: Record<string, string> = {
   "ml.loading.subtitle": "深度学习模型正在服务器上运行…",
 
   // ── Module 3 — 参数预测 ────────────────────────────────
+  // ── 模块 3 与 4 — 服务器关闭模型时显示 ───
+  "ml.disabled.eyebrow": "本服务器暂不支持",
+  "ml.disabled.title": "{module} — 模型未运行",
+  "ml.disabled.body": "当前服务器没有足够的硬件资源运行深度学习模型（需要更多内存与 CPU）。这是本次部署的硬件限制，并非你这边的问题。",
+  "ml.disabled.stillAvailable": "本页的理论讲解、公式和模拟界面仍可正常查看。",
+  "ml.disabled.shortNote": "本服务器未启用模型 — 点击按钮查看详情。",
+
   "ml.m3.title": "近优 MRI 参数预测",
   "ml.m3.theoryP1": "在临床 MRI 中，技师必须选择扫描参数组合 \\((TR, TE, \\dots)\\)——这是一个权衡问题：扫描时间短则图像噪声大，时间长则患者不适。基于信号方程分析与数值仿真，多组织体系中 CNR 随 TR 可呈现复杂的非线性依赖关系——提示传统解析优化方法在多组织目标函数条件下存在潜在局限。",
   "ml.m3.theoryP2": "深度学习模型 **MRIParamNet**（改造后的 ResNet-18，已适配单通道 MRI 灰度图输入）是多模态融合参数优化架构，能够基于一张在锚点参数 \\((TR_0, TE_0)\\) 下采集的 MRI 图像，预测任意 \\((TR, TE)\\) 对的目标函数 \\(J\\)。",

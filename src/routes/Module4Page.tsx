@@ -6,9 +6,11 @@ import { Card } from "../components/ui/Card";
 import { StatusItem } from "../components/learning/StatusItem";
 import { RichText } from "../components/learning/RichText";
 import { ImageUpload } from "../components/learning/ImageUpload";
+import { MlUnavailableModal } from "../components/learning/MlUnavailableModal";
 import { useT } from "../i18n/useT";
 import { LoadingSpinner } from "../components/learning/LoadingSpinner";
 import { Magnifier } from "../components/learning/Magnifier";
+import { useConfigStore } from "../config/store";
 import { superResolve, type SuperResolveResult } from "../ml-service/api";
 import { trackEvent } from "../tracking/events";
 
@@ -16,6 +18,8 @@ type ViewMode = "sr" | "uncertainty";
 
 export default function Module4Page() {
   const { t } = useT();
+  const mlEnabled = useConfigStore((s) => s.mlEnabled);
+  const [mlModalOpen, setMlModalOpen] = useState(false);
 
   // ── State ──
   const [image, setImage] = useState<File | null>(null);
@@ -28,6 +32,11 @@ export default function Module4Page() {
 
   // ── Run ──
   const handleRun = async () => {
+    // ML tắt trên máy chủ này: báo lý do thay vì gọi API rồi hiện lỗi kỹ thuật.
+    if (!mlEnabled) {
+      setMlModalOpen(true);
+      return;
+    }
     if (!image) return;
     setLoading(true);
     setError(null);
@@ -100,12 +109,20 @@ export default function Module4Page() {
             <Button
               variant="primary"
               size="lg"
-              disabled={!canRun}
+              // Khi ML tắt, nút luôn bấm được để người dùng nhận được lời giải
+              // thích, thay vì một nút xám không phản hồi.
+              disabled={mlEnabled && !canRun}
               onClick={handleRun}
               style={{ alignSelf: "flex-start", minWidth: 160 }}
             >
               {loading ? t("ml.m4.running") : t("ml.m4.runBtn")}
             </Button>
+
+            {!mlEnabled && (
+              <p className="mono" style={{ fontSize: "0.78rem", color: "var(--color-field-amber)", margin: 0 }}>
+                {t("ml.disabled.shortNote")}
+              </p>
+            )}
 
             {error && (
               <p className="mono" style={{ color: "var(--color-danger-red)", fontSize: "0.8rem", margin: 0 }}>
@@ -320,6 +337,12 @@ export default function Module4Page() {
             )}
           </>
         }
+      />
+
+      <MlUnavailableModal
+        open={mlModalOpen}
+        onClose={() => setMlModalOpen(false)}
+        moduleLabel={t("common.moduleLabel", { n: 4 })}
       />
     </section>
   );

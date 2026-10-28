@@ -1,9 +1,16 @@
 # aiphys-web — triển khai VPS bằng Docker Compose
 #
-# Ba service:
+# Mặc định chỉ chạy 2 service:
 #   app    — Node/Express: React build + API + proxy ML
-#   ml     — Python FastAPI: inference Module 3 & 4 (chỉ trong mạng nội bộ)
 #   caddy  — reverse proxy + tự động HTTPS
+#
+# Service `ml` nằm sau profile "ml" nên KHÔNG build/chạy mặc định. Bản triển
+# khai đầu tiên tắt mô hình để vừa với VPS nhỏ; Module 3/4 vẫn hiển thị đầy đủ
+# nội dung và báo "chưa hỗ trợ do giới hạn phần cứng" khi người dùng bấm chạy.
+#
+# Bật ML (cần VPS ≥ 4 GB RAM):
+#   docker compose --profile ml up -d --build
+#   # và đặt ML_ENABLED=true trong .env
 #
 # Dữ liệu (SQLite + backup) nằm ở ./data trên máy chủ — sao lưu thư mục này là
 # sao lưu toàn bộ dữ liệu nghiên cứu.
@@ -20,11 +27,11 @@ services:
       DB_PATH: /data/app.db
       ML_HOST: ml
       ML_PORT: "8788"
+      # Bật/tắt mô hình học sâu. false = Module 3/4 hiện thông báo chưa hỗ trợ.
+      ML_ENABLED: ${ML_ENABLED:-false}
       APP_ORIGIN: ${APP_ORIGIN}
     volumes:
       - ./data:/data
-    depends_on:
-      - ml
     # Không publish cổng ra ngoài: chỉ Caddy truy cập được qua mạng nội bộ.
     expose:
       - "8787"
@@ -36,6 +43,7 @@ services:
       start_period: 20s
 
   ml:
+    profiles: ["ml"]
     build:
       context: .
       dockerfile: Dockerfile.ml
