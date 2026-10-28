@@ -43,5 +43,8 @@ ml_venv/
 __pycache__/
 *.pyc
 
-# Large model checkpoints (not served by the active pipeline)
-module3_deploy/best_model_roi.pt
+# Model checkpoints — KHÔNG commit lên git (quá nặng cho GitHub).
+# Chép thủ công vào module3_deploy/ và module4_deploy/ trước khi chạy ML;
+# xem mục "Model checkpoints" trong README.md.
+module3_deploy/*.pt
+module4_deploy/*.pth
