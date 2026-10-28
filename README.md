@@ -138,7 +138,20 @@ Two model files are required for Modules 3 & 4:
 | 3 | `module3_deploy/best_model.pt` | ~43 MB | MRIParamNet — near-optimal parameter prediction |
 | 4 | `module4_deploy/best_model_200e.pth` | ~17 MB | CHARMS-Lite — MRI super-resolution |
 
-These files are tracked in the repository. If you cloned a shallow copy or the files are missing, download them from the original source or ask a teammate.
+These files are **not** in the repository — together they are ~60 MB, too heavy
+for git. You only need them to run the Python ML service (Modules 3 & 4). The
+default deployment has `ML_ENABLED=false`, so the web app runs fine without them.
+
+To run the models, place the two files at the paths above. Ask a teammate for
+them, or restore them from your own backup. Once in place:
+
+```bash
+source ml_venv/bin/activate
+npm run ml        # loads both checkpoints at startup
+```
+
+If a file is missing, the ML service fails at startup with a path in the error
+message — the rest of the site is unaffected.
 
 ### Swapping models
 
