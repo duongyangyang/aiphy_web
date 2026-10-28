@@ -36,7 +36,9 @@ server/data/*.db
 server/data/*.db-wal
 server/data/*.db-shm
 server/data/backups/
-data/
+# Chỉ thư mục data/ ở GỐC repo (volume Docker). Thiếu dấu "/" đầu thì mẫu này
+# khớp cả src/data/ và làm git bỏ qua mọi file mới trong đó.
+/data/
 
 # Python ML
 ml_venv/
