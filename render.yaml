@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: aiphy-web
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm ci && npm run build
+    startCommand: npm run server
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Mô hình học sâu tắt: Module 3/4 hiển thị đầy đủ nội dung nhưng báo
+      # "chưa hỗ trợ do giới hạn phần cứng" khi bấm chạy.
+      - key: ML_ENABLED
+        value: "false"
+      # Gói free KHÔNG có ổ đĩa persistent → database mất khi redeploy hoặc
+      # service ngủ rồi thức. Muốn giữ dữ liệu, nâng lên gói trả phí và bỏ
+      # comment khối `disk:` bên dưới, đồng thời đổi DB_PATH thành /var/data/app.db.
+      - key: DB_PATH
+        value: /opt/render/project/src/server/data/app.db
+      # Phải khớp tên miền Render cấp, nếu không request ghi dữ liệu bị chặn 403.
+      - key: APP_ORIGIN
+        value: https://aiphy-web.onrender.com
+
+    # Chỉ dùng được với gói trả phí (Starter trở lên):
+    # disk:
+    #   name: aiphys-data
+    #   mountPath: /var/data
+    #   sizeGB: 1
