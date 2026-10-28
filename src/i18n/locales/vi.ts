@@ -41,6 +41,8 @@ export const vi: Record<string, string> = {
   "home.heroEyebrow": "Nền tảng thí nghiệm MRI số",
   "home.enterModule1": "Vào Module 1",
   "home.viewModules": "Xem các module",
+  "home.createAccount": "Tạo tài khoản để bắt đầu",
+  "home.guestNote": "Bạn đang xem với tư cách khách. Tạo tài khoản để lưu tiến độ học.",
   "home.modulesEyebrow": "4 lối vào",
   "home.modulesTitle": "Chọn một module để bắt đầu",
   "home.importanceEyebrow": "Vì sao MRI quan trọng",
@@ -57,13 +59,6 @@ export const vi: Record<string, string> = {
   "home.contactBody": "Bạn có thể liên hệ qua email hoặc đơn vị công tác bên dưới. Thông tin này sẽ được cập nhật.",
 
   // ── Module 1 shell ──────────────────────────────────
-  "module1.eyebrow": "Module 1",
-  "module1.introPara": "Bạn sẽ vận hành một máy MRI giáo dục qua 11 bài thí nghiệm tương tác: từ khi phát hiện tín hiệu cộng hưởng (FID), hiệu chỉnh máy, tạo ảnh, đến đo thời gian hồi phục T1/T2. Mỗi bài mở đầu bằng một hộp kiến thức ngắn, sau đó mở khóa bảng điều khiển để bạn tự kéo tham số và xem kết quả thời gian thực.",
-  "module1.phase1": "Giai đoạn 1 · Nền tảng tín hiệu — FID, từ trường.",
-  "module1.phase2": "Giai đoạn 2 · Hiệu chỉnh máy — shim, gain, xung cứng/mềm.",
-  "module1.phase3": "Giai đoạn 3 · Tạo ảnh cơ bản — prescan, FOV, trọng số.",
-  "module1.phase4": "Giai đoạn 4 · Đo T1/T2 — Inversion Recovery, CPMG.",
-  "module1.start": "Đã hiểu, bắt đầu học tập",
   "module1.progressLabel": "Tiến độ · {done}/{total} bài đã hoàn thành",
   "module1.lessonNotFound": "Không tìm thấy bài",
   "module1.checkPath": "kiểm tra lại đường dẫn",
@@ -75,10 +70,6 @@ export const vi: Record<string, string> = {
   "module1.stepN": "Bước {n}",
 
   // ── Module 2 ───────────────────────────────────────
-  "module2.eyebrow": "Module 2",
-  "module2.introTitle": "Mô phỏng giả lập chụp MRI",
-  "module2.introBody": "Bạn sẽ vận hành một phần mềm giả lập MRI theo đúng 5 bước của quy trình chụp thật: hiệu chỉnh hệ thống, định vị lát cắt, đặt tham số, thu k-space và tái tạo ảnh. Mỗi bước mở khoá theo thứ tự — phải hoàn thành bước trước mới sang bước sau. Mọi ca chụp được lưu lại để xem lại.",
-  "module2.start": "Đã hiểu, bắt đầu mô phỏng",
   "module2.ready": "Sẵn sàng.",
   "module2.navAria": "Quy trình chụp",
   "module2.contentAria": "Nội dung bước",

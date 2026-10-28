@@ -38,6 +38,8 @@ export const en: Record<string, string> = {
   "home.heroEyebrow": "Digital MRI lab platform",
   "home.enterModule1": "Enter Module 1",
   "home.viewModules": "View modules",
+  "home.createAccount": "Create an account to start",
+  "home.guestNote": "You are browsing as a guest. Create an account to save your progress.",
   "home.modulesEyebrow": "4 entry points",
   "home.modulesTitle": "Choose a module to start",
   "home.importanceEyebrow": "Why MRI matters",
@@ -54,13 +56,6 @@ export const en: Record<string, string> = {
   "home.contactBody": "You can reach us by email or via the affiliation below. This information will be updated.",
 
   // ── Module 1 shell ──────────────────────────────────
-  "module1.eyebrow": "Module 1",
-  "module1.introPara": "You will operate an educational MRI scanner through 11 interactive experiments: from detecting the resonance signal (FID), calibrating the machine, producing images, to measuring T1/T2 relaxation times. Each lesson opens with a short knowledge box, then unlocks the control panel so you can drag parameters and see real-time results.",
-  "module1.phase1": "Phase 1 · Signal foundations — FID, magnetic field.",
-  "module1.phase2": "Phase 2 · Machine calibration — shim, gain, hard/soft pulses.",
-  "module1.phase3": "Phase 3 · Basic imaging — prescan, FOV, weighting.",
-  "module1.phase4": "Phase 4 · Measuring T1/T2 — Inversion Recovery, CPMG.",
-  "module1.start": "Got it, start learning",
   "module1.progressLabel": "Progress · {done}/{total} lessons completed",
   "module1.lessonNotFound": "Lesson not found",
   "module1.checkPath": "please check the URL",
@@ -72,10 +67,6 @@ export const en: Record<string, string> = {
   "module1.stepN": "Step {n}",
 
   // ── Module 2 ───────────────────────────────────────
-  "module2.eyebrow": "Module 2",
-  "module2.introTitle": "MRI scanning simulator",
-  "module2.introBody": "You will operate an MRI simulator following the 5 steps of a real scan workflow: calibrate the system, localize slices, set parameters, acquire k-space and reconstruct images. Each step unlocks in order — you must complete a step before moving on. Every scan is saved for review.",
-  "module2.start": "Got it, start the simulation",
   "module2.ready": "Ready.",
   "module2.navAria": "Scan workflow",
   "module2.contentAria": "Step content",

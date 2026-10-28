@@ -1,16 +1,20 @@
 import { Link, NavLink } from "react-router-dom";
+import { Button } from "../ui/Button";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { UserMenu } from "./UserMenu";
+import { useAuthStore } from "../../auth/store";
 import { useT } from "../../i18n/useT";
 
 /**
  * Header — logo + điều hướng 4 module + menu người dùng.
  *
- * Mọi route đều yêu cầu đăng nhập, nên header luôn có user; `UserMenu` tự ẩn
- * nếu chưa đăng nhập (trang /login, /register).
+ * Trang chủ xem được khi chưa đăng nhập; các module thì không. Vì vậy khi
+ * chưa đăng nhập, header hiện nút "Đăng nhập" thay cho menu người dùng, và
+ * các liên kết module sẽ bị `RequireAuth` chuyển về /login.
  */
 export function Header() {
   const { t } = useT();
+  const status = useAuthStore((s) => s.status);
 
   return (
     <header
@@ -48,7 +52,18 @@ export function Header() {
 
         <div style={{ marginLeft: "auto", display: "flex", gap: "var(--space-3)", alignItems: "center", flexWrap: "wrap" }}>
           <LanguageSwitcher />
-          <UserMenu />
+          {status === "authed" ? (
+            <UserMenu />
+          ) : (
+            <div style={{ display: "flex", gap: "var(--space-2)" }}>
+              <Link to="/login" style={{ textDecoration: "none" }}>
+                <Button variant="ghost" size="sm">{t("header.login")}</Button>
+              </Link>
+              <Link to="/register" style={{ textDecoration: "none" }}>
+                <Button variant="secondary" size="sm">{t("header.register")}</Button>
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </header>

@@ -38,6 +38,8 @@ export const zh: Record<string, string> = {
   "home.heroEyebrow": "数字 MRI 实验平台",
   "home.enterModule1": "进入模块 1",
   "home.viewModules": "查看模块",
+  "home.createAccount": "创建账号开始学习",
+  "home.guestNote": "你正在以访客身份浏览。创建账号即可保存学习进度。",
   "home.modulesEyebrow": "四个入口",
   "home.modulesTitle": "选择一个模块开始",
   "home.importanceEyebrow": "为什么 MRI 很重要",
@@ -54,13 +56,6 @@ export const zh: Record<string, string> = {
   "home.contactBody": "您可以通过下方邮箱或所属单位联系我们。此信息将会更新。",
 
   // ── 模块 1 外壳 ──────────────────────────────────────
-  "module1.eyebrow": "模块 1",
-  "module1.introPara": "您将通过 11 个互动实验操作一台教学 MRI 扫描仪：从检测共振信号（FID）、校准设备、生成图像，到测量 T1/T2 弛豫时间。每节课都以一个简短的知识框开始，随后解锁控制面板，让您自由拖动参数并查看实时结果。",
-  "module1.phase1": "阶段 1 · 信号基础 — FID、磁场。",
-  "module1.phase2": "阶段 2 · 设备校准 — shim、gain、硬/软脉冲。",
-  "module1.phase3": "阶段 3 · 基础成像 — prescan、FOV、加权。",
-  "module1.phase4": "阶段 4 · 测量 T1/T2 — Inversion Recovery、CPMG。",
-  "module1.start": "知道了，开始学习",
   "module1.progressLabel": "进度 · 已完成 {done}/{total} 节课",
   "module1.lessonNotFound": "未找到课程",
   "module1.checkPath": "请检查网址",
@@ -72,10 +67,6 @@ export const zh: Record<string, string> = {
   "module1.stepN": "步骤 {n}",
 
   // ── 模块 2 ──────────────────────────────────────────
-  "module2.eyebrow": "模块 2",
-  "module2.introTitle": "MRI 扫描模拟器",
-  "module2.introBody": "您将按照真实扫描流程的 5 个步骤操作 MRI 模拟器：校准系统、定位切层、设置参数、采集 k 空间并重建图像。每个步骤按顺序解锁——必须完成前一步才能进入下一步。每次扫描都会保存以便回看。",
-  "module2.start": "知道了，开始模拟",
   "module2.ready": "就绪。",
   "module2.navAria": "扫描流程",
   "module2.contentAria": "步骤内容",

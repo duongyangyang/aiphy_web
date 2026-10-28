@@ -36,14 +36,9 @@ export default function App() {
         <Route path="/login" element={<AuthPage mode="login" />} />
         <Route path="/register" element={<AuthPage mode="register" />} />
 
-        <Route
-          path="/"
-          element={
-            <RequireAuth>
-              <HomePage />
-            </RequireAuth>
-          }
-        />
+        {/* Trang chủ công khai: người chưa có tài khoản vẫn xem được giới thiệu
+            và liên hệ; vào module mới cần đăng nhập. */}
+        <Route path="/" element={<HomePage />} />
         <Route
           path="/module-1/*"
           element={
@@ -77,7 +72,7 @@ export default function App() {
           }
         />
         <Route
-          path="/module-3"
+          path="/module-3/*"
           element={
             <RequireAuth>
               <Module3Page />
@@ -85,7 +80,7 @@ export default function App() {
           }
         />
         <Route
-          path="/module-4"
+          path="/module-4/*"
           element={
             <RequireAuth>
               <Module4Page />

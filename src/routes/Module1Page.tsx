@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ComponentType } from "react";
-import { Routes, Route, useParams, Link, useNavigate } from "react-router-dom";
+import { Routes, Route, useParams, useNavigate } from "react-router-dom";
 import { Card } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
 import { ProgressRail } from "../components/ui/ProgressRail";
 import { LessonTabs } from "../components/learning/LessonTabs";
 import { LessonKnowledgeModal } from "../components/learning/LessonKnowledgeModal";
 import { LessonPlaceholder } from "../components/learning/LessonPlaceholder";
+import { ModuleIntroPage } from "../components/learning/ModuleIntroPage";
 import Lesson1Fid from "./module1/Lesson1Fid";
 import Lesson2FieldStability from "./module1/Lesson2FieldStability";
 import Lesson3Shimming from "./module1/Lesson3Shimming";
@@ -19,7 +20,6 @@ import Lesson9Weighting from "./module1/Lesson9Weighting";
 import Lesson10T1Ir from "./module1/Lesson10T1Ir";
 import Lesson11T2Cpmg from "./module1/Lesson11T2Cpmg";
 import { module1Lessons, phaseLabels, getLesson } from "../data/module1Lessons";
-import { getModule } from "../data/modules";
 import { getLessonKnowledge } from "../data/lessonKnowledge";
 import { useProgressStore } from "../progress/store";
 import { useT } from "../i18n/useT";
@@ -73,35 +73,12 @@ export default function Module1Page() {
 }
 
 /**
- * Module1Intro — block giới thiệu Module 1, hiện khi lần đầu vào /module-1.
- * Nút "Đã hiểu, bắt đầu học tập" dẫn vào Bài 1 (nơi hộp kiến thức Bài 1 mở ra).
+ * Module1Intro — trang giới thiệu Module 1, hiện khi vào /module-1.
+ * Nút CTA dẫn thẳng vào Bài 1 (nơi hộp kiến thức Bài 1 mở ra).
  */
 function Module1Intro() {
-  const { t, tr } = useT();
   const firstLesson = module1Lessons[0];
-  const mod = getModule("module-1");
-  return (
-    <div style={{ display: "grid", gap: "var(--space-5)" }}>
-      <Card>
-        <p className="eyebrow">{t("module1.eyebrow")}</p>
-        <h1 style={{ fontSize: "1.8rem", marginTop: "var(--space-2)" }}>{mod ? tr(mod.title) : ""}</h1>
-        <p className="muted" style={{ fontSize: "1.02rem", maxWidth: "60ch" }}>
-          {t("module1.introPara")}
-        </p>
-        <ul style={{ display: "grid", gap: "var(--space-2)", marginTop: "var(--space-3)", maxWidth: "60ch" }}>
-          <li className="muted">{t("module1.phase1")}</li>
-          <li className="muted">{t("module1.phase2")}</li>
-          <li className="muted">{t("module1.phase3")}</li>
-          <li className="muted">{t("module1.phase4")}</li>
-        </ul>
-        <div style={{ marginTop: "var(--space-5)", display: "flex", justifyContent: "flex-start" }}>
-          <Link to={`${BASE_PATH}/${firstLesson.id}`}>
-            <Button variant="primary" size="lg">{t("module1.start")}</Button>
-          </Link>
-        </div>
-      </Card>
-    </div>
-  );
+  return <ModuleIntroPage moduleId="module-1" ctaTo={`${BASE_PATH}/${firstLesson.id}`} />;
 }
 
 function LessonRoute() {

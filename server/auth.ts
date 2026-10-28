@@ -68,6 +68,17 @@ function hashToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
 
+/**
+ * Request này có đi qua HTTPS không?
+ *
+ * `trust proxy` đã bật nên `req.secure` đọc đúng `X-Forwarded-Proto` do Caddy
+ * gửi. Đây là nguồn sự thật duy nhất — không dùng NODE_ENV, vì cùng một image
+ * production có thể được chạy thử bằng http://localhost.
+ */
+function isHttps(req: Request): boolean {
+  return req.secure || req.get("x-forwarded-proto") === "https";
+}
+
 export function createSession(userId: string, req: Request, res: Response): void {
   const token = randomBytes(32).toString("hex");
   const created = Date.now();
@@ -86,7 +97,10 @@ export function createSession(userId: string, req: Request, res: Response): void
   res.cookie(SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    // Chỉ đặt cờ `secure` khi request thực sự đi qua HTTPS. Nếu gắn cứng theo
+    // NODE_ENV, chạy container production trên http://localhost sẽ khiến
+    // Safari từ chối lưu cookie và người dùng không đăng nhập được.
+    secure: isHttps(req),
     maxAge: SESSION_TTL_MS,
     path: "/",
   });

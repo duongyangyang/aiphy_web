@@ -122,3 +122,10 @@ button {
   }
 }
 
+/* Trang giới thiệu module: hai cột (nội dung + minh hoạ) → một cột trên màn hẹp */
+@media (max-width: 900px) {
+  .intro-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+

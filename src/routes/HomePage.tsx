@@ -4,6 +4,7 @@ import { Button } from "../components/ui/Button";
 import { modules, type ModuleVisual } from "../data/modules";
 import { siteInfo } from "../data/siteInfo";
 import { ModuleCardVisual } from "../components/home/ModuleCardVisual";
+import { useAuthStore } from "../auth/store";
 import { useT } from "../i18n/useT";
 
 /**
@@ -31,6 +32,7 @@ export default function HomePage() {
 
 function Hero() {
   const { t, tr } = useT();
+  const authed = useAuthStore((s) => s.status === "authed");
   return (
     <section
       className="container"
@@ -51,13 +53,27 @@ function Hero() {
           {tr(siteInfo.heroSubcopy)}
         </p>
         <div style={{ display: "flex", gap: "var(--space-3)", marginTop: "var(--space-5)", flexWrap: "wrap" }}>
-          <Link to="/module-1">
-            <Button variant="primary" size="lg">{t("home.enterModule1")}</Button>
-          </Link>
+          {authed ? (
+            <Link to="/module-1">
+              <Button variant="primary" size="lg">{t("home.enterModule1")}</Button>
+            </Link>
+          ) : (
+            <Link to="/register">
+              <Button variant="primary" size="lg">{t("home.createAccount")}</Button>
+            </Link>
+          )}
           <a href="#modules">
             <Button variant="secondary" size="lg">{t("home.viewModules")}</Button>
           </a>
         </div>
+        {!authed && (
+          <p className="muted" style={{ fontSize: "0.88rem", marginTop: "var(--space-3)", marginBottom: 0 }}>
+            {t("home.guestNote")}{" "}
+            <Link to="/login" style={{ color: "var(--color-proton-cyan)" }}>
+              {t("header.login")}
+            </Link>
+          </p>
+        )}
       </div>
 
       <HeroBoreVisual />
