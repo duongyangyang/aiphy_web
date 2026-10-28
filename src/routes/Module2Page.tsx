@@ -2,7 +2,6 @@ import { Routes, Route, Link } from "react-router-dom";
 import { Card } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
 import { Module2Shell } from "./module2/Module2Shell";
-import ScanRecordPage from "./ScanRecordPage";
 import { MODULE2_STEPS } from "../stores/module2Types";
 import { useT } from "../i18n/useT";
 
@@ -14,18 +13,16 @@ const SIM_PATH = "/module-2/simulator";
  * Routing lồng (giống Module 1):
  *   /module-2            → Module2Intro (block giới thiệu + nút vào simulator)
  *   /module-2/simulator  → Module2Shell (luồng 5 bước)
- *   /module-2/scan/:id   → ScanRecordPage (xem lại ca chụp)
  *
  * Luồng 5 bước mô phỏng phần mềm NMR thật: Prescan → Scout → Scan setup →
  * Scan → Image processing. Toàn bộ trạng thái nằm trong `useModule2Store`
- * (Zustand); bản thân shell chỉ là vỏ mỏng render theo `currentStep`.
+ * (Zustand) và không lưu qua lần tải trang — mỗi ca chụp bắt đầu lại từ đầu.
  */
 export default function Module2Page() {
   return (
     <Routes>
       <Route index element={<Module2Intro />} />
       <Route path="simulator" element={<Module2Shell />} />
-      <Route path="scan/:id" element={<ScanRecordPage />} />
       <Route path="*" element={<Module2Intro />} />
     </Routes>
   );

@@ -10,6 +10,7 @@ import { ImageUpload } from "../components/learning/ImageUpload";
 import { useT } from "../i18n/useT";
 import { LoadingSpinner } from "../components/learning/LoadingSpinner";
 import { recommendParams, type RecommendParamsResult } from "../ml-service/api";
+import { trackEvent } from "../tracking/events";
 
 type Method = "argmax" | "soft_argmax" | "quadratic";
 
@@ -44,6 +45,18 @@ export default function Module3Page() {
         temperature,
       });
       setResult(r);
+      // Sự kiện nghiên cứu: tham số người dùng chọn và kết quả mô hình đề xuất.
+      trackEvent("m3_run", "module-3", {
+        tr0,
+        te0,
+        j0,
+        method,
+        top_k: topK,
+        temperature,
+        TR_star: r.TR_star,
+        TE_star: r.TE_star,
+        J_max: r.J_max,
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -93,7 +106,7 @@ export default function Module3Page() {
                 unit="ms"
                 min={30}
                 max={3000}
-                step={50}
+                step={1}
                 value={tr0}
                 onChange={setTr0}
               />
@@ -105,7 +118,7 @@ export default function Module3Page() {
                 unit="ms"
                 min={5}
                 max={200}
-                step={5}
+                step={1}
                 value={te0}
                 onChange={setTe0}
               />
@@ -116,7 +129,7 @@ export default function Module3Page() {
                 label={t("ml.m3.j0Label")}
                 min={0.5}
                 max={5.0}
-                step={0.1}
+                step={0.01}
                 value={j0}
                 onChange={setJ0}
               />

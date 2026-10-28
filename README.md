@@ -48,10 +48,57 @@ Open **http://localhost:5173** in your browser.
 | Service | Port | Command | Description |
 |---------|------|---------|-------------|
 | **Vite dev server** | 5173 | `npm run dev` | React frontend with hot reload |
-| **Express API** | 8787 | `npm run server` | Scan saving, health check, ML proxy |
+| **Express API** | 8787 | `npm run server` | Auth, usage tracking, progress, admin, ML proxy, SQLite |
 | **Python ML** | 8788 | `npm run ml` | Module 3 (MRIParamNet) + Module 4 (CHARMS-Lite) inference |
 
 The Vite dev server proxies `/api/*` → `localhost:8787` and `/api/ml/*` → `localhost:8788` automatically — no CORS issues in development.
+
+---
+
+## Accounts & data
+
+The platform requires login. Two roles:
+
+| Role | Can do |
+|------|--------|
+| `user` | Learn Module 1 (progress saved), run Modules 2–4 |
+| `admin` | Everything above + `/admin` dashboard, user management, CSV export |
+
+Users self-register at `/register`. There is no email service, so password
+reset is done by an admin from the dashboard.
+
+### Creating the first admin
+
+```bash
+npm run admin:create -- --email you@example.com --name "Your name"
+```
+
+A random password is printed **once**. Add `--password ...` to set your own.
+
+### Where data lives
+
+Everything is in one SQLite file — `server/data/app.db` in development,
+`/data/app.db` in Docker. Tables:
+
+| Table | Purpose |
+|-------|---------|
+| `users` | Accounts (scrypt password hashes) |
+| `sessions` | Login sessions (SHA-256 of the cookie token only) |
+| `usage_sessions` | One row per browser tab session — opened/last-seen/closed, duration |
+| `usage_module_time` | Seconds per module within each usage session |
+| `lesson_progress` | Module 1 progress per user |
+| `events` | Module 2/3/4 runs with their parameters and results |
+
+**Usage time** is measured from tab open to tab close: the browser sends a
+heartbeat every 30 s while the tab is visible, and the server sums
+`last_seen_at − opened_at`. Gaps longer than 90 s (sleep, network loss) are not
+counted, so the numbers stay honest.
+
+Back up the whole file:
+
+```bash
+npm run build && ./scripts/backup-db.sh
+```
 
 ---
 
@@ -72,6 +119,10 @@ npm run ml
 ```
 
 Open **http://localhost:8787** — the Express server serves the built React app from `dist/`.
+
+For a public deployment with a domain name and automatic HTTPS, see the
+**Triển khai VPS** chapter in [deploy.md](deploy.md) — it uses Docker Compose
+with three containers (`app`, `ml`, `caddy`).
 
 ---
 
@@ -102,15 +153,19 @@ To replace a model with your own:
 
 ```
 src/
-├─ routes/            pages (HomePage, Module1Page, Module2Page, Module3Page, Module4Page, …)
-├─ components/        layout (Header/Footer), learning (LabLayout, ParamSlider, ImageUpload…), charts, ui
+├─ routes/            pages (HomePage, Module1Page, Module2Page, Module3Page, Module4Page, AdminDashboardPage, …)
+├─ components/        layout (Header/UserMenu/Footer), learning (LabLayout, ParamSlider…), charts, admin, ui
 ├─ data/              registries (modules, lessons, knowledge boxes, site info)
+├─ auth/              session store, API client, route guards
+├─ tracking/          usage heartbeat + learning event helpers
+├─ progress/          Module 1 progress store (synced with server)
 ├─ ml-service/        typed fetch client for the Python ML backend
 ├─ mri-sim/           phantom + colormap + signal computation
 ├─ simulations/       closed-form physics (deterministic pseudo-noise)
 ├─ i18n/              store + useT hook + locale dictionaries (vi/en/zh)
 └─ stores/            Zustand stores (module2 scan session)
-server/               Express API
+server/               Express API (auth, tracking, progress, admin) + SQLite schema
+scripts/              create-admin.ts, backup-db.sh
 ml_service/           Python FastAPI — ML inference for Modules 3 & 4
 module3_deploy/       MRIParamNet model + checkpoint
 module4_deploy/       CHARMS-Lite model + checkpoint
@@ -125,6 +180,7 @@ module4_deploy/       CHARMS-Lite model + checkpoint
 | `npm run dev` | Start Vite dev server (web). |
 | `npm run server` | Start Express API. |
 | `npm run ml` | Start Python ML service (Modules 3 & 4). |
+| `npm run admin:create` | Create an admin account (prints a password once). |
 | `npm run dev:all` | Run web + api + ml concurrently. |
 | `npm run typecheck` | `tsc --noEmit` — type-check without emitting. |
 | `npm run build` | Type-check then build to `dist/`. |

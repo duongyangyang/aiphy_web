@@ -33,8 +33,25 @@ from model import CHARMS_Lite                             # type: ignore[import-
 from inference import load_model as load_charms, super_resolve  # type: ignore[import-untyped]
 
 
+def _check_upload(data: bytes, label: str = "image") -> None:
+    """Chặn upload quá lớn hoặc ảnh quá nhiều điểm ảnh (chống tràn RAM)."""
+    if len(data) > MAX_UPLOAD_BYTES:
+        raise ValueError(
+            f"{label} quá lớn ({len(data) / 1024 / 1024:.1f} MB). "
+            f"Giới hạn {MAX_UPLOAD_BYTES // 1024 // 1024} MB."
+        )
+    with Image.open(io.BytesIO(data)) as probe:
+        w, h = probe.size
+    if w * h > MAX_IMAGE_PIXELS:
+        raise ValueError(
+            f"{label} có kích thước {w}x{h} = {w * h:,} điểm ảnh, vượt giới hạn "
+            f"{MAX_IMAGE_PIXELS:,}. Vui lòng thu nhỏ ảnh trước khi tải lên."
+        )
+
+
 def _load_mri_tensor(data: bytes) -> torch.Tensor:
     """Đọc ảnh từ bytes → tensor (1,1,H,W) chuẩn hóa [0,1]."""
+    _check_upload(data)
     img = Image.open(io.BytesIO(data)).convert("L")
     tensor = torch.from_numpy(np.array(img, dtype=np.float32)) / 255.0
     return tensor.unsqueeze(0).unsqueeze(0)
@@ -47,6 +64,12 @@ TE_CANDIDATES = np.arange(5, 200 + 1, 5)
 
 M3_CHECKPOINT = os.path.join(ROOT, "module3_deploy", "best_model.pt")
 M4_CHECKPOINT = os.path.join(ROOT, "module4_deploy", "best_model_200e.pth")
+
+# ── Giới hạn upload ───────────────────────────────────────────────────
+# Chặn ảnh quá lớn trước khi đưa vào model: một ảnh 8000x8000 có thể làm tràn
+# RAM của máy chủ. Giới hạn này đủ rộng cho mọi ảnh MRI thực tế.
+MAX_UPLOAD_BYTES = 10 * 1024 * 1024   # 10 MB mỗi file
+MAX_IMAGE_PIXELS = 2048 * 2048        # ~4.2 megapixel
 
 # ── Global state ──────────────────────────────────────────────────────
 device: torch.device
@@ -108,6 +131,7 @@ def health():
 def _read_image(file: UploadFile) -> np.ndarray:
     """Đọc ảnh PNG upload thành numpy array grayscale [0, 255]."""
     contents = file.file.read()
+    _check_upload(contents)
     img = Image.open(io.BytesIO(contents)).convert("L")
     return np.array(img, dtype=np.float32)
 
@@ -216,11 +240,7 @@ def _generate_heatmap(J_grid, TR_candidates, TE_candidates,
 
 def _recommend(image_arr: np.ndarray, tr0: float, te0: float, j0: float,
                method: str, top_k: int, temperature: float) -> dict:
-    """Chạy grid scan + chọn điểm (TR*, TE*).
-
-    Tối ưu: trích xuất feature ảnh (ResNet18) một lần duy nhất,
-    sau đó chỉ quét tham số qua MLP nhẹ (nhanh hơn ~10-50×).
-    """
+    """Chạy grid scan + chọn điểm (TR*, TE*)."""
     TR_grid, TE_grid = np.meshgrid(
         TR_CANDIDATES.astype(float), TE_CANDIDATES.astype(float))
     trc_flat, tec_flat = TR_grid.ravel(), TE_grid.ravel()
@@ -238,24 +258,17 @@ def _recommend(image_arr: np.ndarray, tr0: float, te0: float, j0: float,
     ], axis=1)
     params_all = torch.tensor(params_all, dtype=torch.float32)
 
-    # Ảnh: (H, W) → (1, 1, H, W)
+    # Ảnh: (H, W) → (1, 1, H, W) → repeat cho batch
     img_tensor = torch.from_numpy(image_arr / 255.0).unsqueeze(0).to(device)
 
-    # ── Bước 1: trích xuất feature ảnh MỘT LẦN (ResNet18 — phần nặng nhất) ──
-    batch_size = 2048
-    with torch.inference_mode():
-        img_feat = m3_model.backbone(img_tensor)  # (1, 512)
-
-        # ── Bước 2: quét tham số (MLP nhẹ — không cần ResNet18 nữa) ──
-        preds = np.zeros(n, dtype=np.float32)
+    preds = np.zeros(n, dtype=np.float32)
+    batch_size = 512
+    with torch.no_grad():
         for start in range(0, n, batch_size):
             end = min(start + batch_size, n)
+            batch_img = img_tensor.unsqueeze(0).repeat(end - start, 1, 1, 1)
             batch_params = params_all[start:end].to(device)
-            feat_param = m3_model.param_mlp(batch_params)          # (B, 32)
-            # Mở rộng img_feat cho khớp batch
-            feat_img_batch = img_feat.expand(end - start, -1)      # (B, 512)
-            combined = torch.cat([feat_img_batch, feat_param], dim=1)
-            pred_norm = m3_model.head(combined).squeeze(-1).cpu().numpy()
+            pred_norm = m3_model(batch_img, batch_params).cpu().numpy()
             preds[start:end] = pred_norm * m3_j_std + m3_j_mean
 
     J_grid = preds.reshape(TE_grid.shape)
@@ -384,4 +397,6 @@ async def super_resolve_endpoint(
 # ── Main ──────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8788)
+    # 0.0.0.0 để container Docker nhận được kết nối từ service `app`. Khi chạy
+    # local, cổng 8788 chỉ lộ trong máy nên không khác biệt về bảo mật.
+    uvicorn.run(app, host=os.environ.get("ML_HOST", "0.0.0.0"), port=int(os.environ.get("ML_PORT", "8788")))

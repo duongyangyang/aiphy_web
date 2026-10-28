@@ -13,6 +13,7 @@ Tài liệu này hướng dẫn cài đặt toàn bộ môi trường để ch�
 5. [Chạy ứng dụng](#5-chạy-ứng-dụng)
 6. [Triển khai phòng lab](#6-triển-khai-phòng-lab)
 7. [Xử lý lỗi thường gặp](#7-xử-lý-lỗi-thường-gặp)
+8. [Triển khai VPS (có tên miền + HTTPS)](#8-triển-khai-vps-có-tên-miền--https)
 
 ---
 
@@ -325,4 +326,219 @@ npm run dev:all
 
 ---
 
-*Cập nhật: 2025-08-25*
+## 8. Triển khai VPS (có tên miền + HTTPS)
+
+Phần này dành cho khi bạn muốn đưa website lên internet để nhiều người truy cập. Website chạy trong 3 container Docker: `app` (Node + React), `ml` (Python + PyTorch), `caddy` (tự động HTTPS).
+
+### 8.1. Cần mua gì
+
+| Thứ | Yêu cầu | Giá tham khảo |
+|-----|---------|---------------|
+| **VPS** | 2 vCPU, **4 GB RAM**, 40 GB SSD, Ubuntu 24.04 | Hetzner CX22 ~€4.5/tháng · DigitalOcean ~$12/tháng |
+| **Tên miền** | Bất kỳ (.com, .vn, .edu.vn…) | ~250.000đ/năm |
+
+> **Vì sao cần 4 GB RAM:** Module 3 và 4 load 2 model PyTorch (~60 MB weights nhưng cần thêm RAM cho inference). Với 2 GB, tiến trình ML có thể bị hệ điều hành kill giữa chừng.
+
+**Không cần** GPU, không cần thuê thêm database — SQLite nằm ngay trên VPS.
+
+### 8.2. Trỏ tên miền về VPS
+
+1. Mua VPS, ghi lại **địa chỉ IP** (dạng `123.45.67.89`).
+2. Vào trang quản lý tên miền → phần **DNS** → thêm bản ghi:
+   - Type: `A`
+   - Name: `@` (hoặc tên miền con nếu muốn, ví dụ `mri`)
+   - Value: `IP của VPS`
+3. Đợi 5–30 phút. Kiểm tra bằng:
+
+```bash
+ping your-domain.com
+```
+
+Nếu thấy đúng IP của VPS là được.
+
+### 8.3. Cài Docker trên VPS
+
+SSH vào VPS (thay `root@IP` bằng thông tin nhà cung cấp gửi cho bạn):
+
+```bash
+ssh root@123.45.67.89
+```
+
+Chạy 5 lệnh sau để cài Docker:
+
+```bash
+apt update && apt upgrade -y
+apt install -y curl git ufw
+curl -fsSL https://get.docker.com | sh
+ufw allow 22/tcp && ufw allow 80/tcp && ufw allow 443/tcp && ufw --force enable
+```
+
+Kiểm tra:
+
+```bash
+docker --version
+docker compose version
+```
+
+### 8.4. Lấy mã nguồn và cấu hình
+
+```bash
+cd /opt
+git clone https://gitee.com/yangd_74/prv_web.git aiphys
+cd aiphys
+```
+
+> **Lưu ý:** hai file model `module3_deploy/best_model.pt` (~43 MB) và `module4_deploy/best_model_200e.pth` (~17 MB) phải có trong repo. Nếu clone về thiếu, chép chúng lên bằng `scp` từ máy của bạn.
+
+Tạo file cấu hình:
+
+```bash
+cp .env.production.example .env
+nano .env
+```
+
+Sửa **2 dòng**, dùng đúng tên miền của bạn (không có `https://` ở dòng đầu):
+
+```
+DOMAIN=mri.example.com
+APP_ORIGIN=https://mri.example.com
+```
+
+Lưu lại: `Ctrl+O`, `Enter`, `Ctrl+X`.
+
+### 8.5. Khởi động
+
+```bash
+docker compose up -d --build
+```
+
+Lần đầu mất **10–20 phút** vì phải tải PyTorch và build frontend. Xem tiến trình:
+
+```bash
+docker compose logs -f
+```
+
+Khi thấy dòng `server listening on http://localhost:8787` là xong. Nhấn `Ctrl+C` để thoát khỏi chế độ xem log (container vẫn chạy).
+
+Kiểm tra cả 3 service đều chạy:
+
+```bash
+docker compose ps
+```
+
+Mở trình duyệt vào `https://your-domain.com` — chứng chỉ HTTPS được Caddy tự xin trong ~30 giây đầu.
+
+### 8.6. Tạo tài khoản quản trị đầu tiên
+
+Hệ thống không gửi email nên admin đầu tiên phải tạo từ dòng lệnh trên VPS:
+
+```bash
+docker compose exec app npx tsx scripts/create-admin.ts --email ban@example.com --name "Tên bạn"
+```
+
+Kết quả in ra một **mật khẩu ngẫu nhiên** — chỉ hiện một lần, lưu lại ngay.
+
+Sau đó đăng nhập bằng tài khoản này, vào menu tên → **Bảng điều khiển**.
+
+### 8.7. Các lệnh thường dùng
+
+| Việc cần làm | Lệnh |
+|---|---|
+| Xem log | `docker compose logs -f app` (hoặc `ml`, `caddy`) |
+| Khởi động lại web | `docker compose restart app` |
+| Cập nhật code mới | `git pull && docker compose up -d --build` |
+| Dừng toàn bộ | `docker compose down` |
+| Kiểm tra sức khoẻ | `docker compose ps` (cột STATUS phải là `healthy`) |
+
+### 8.8. Sao lưu dữ liệu (quan trọng)
+
+Toàn bộ dữ liệu nghiên cứu nằm trong **một file**: `/opt/aiphys/data/app.db`.
+
+Cài cron sao lưu hằng ngày:
+
+```bash
+chmod +x /opt/aiphys/scripts/backup-db.sh
+crontab -e
+```
+
+Thêm dòng sau (sao lưu 2:30 sáng mỗi ngày, giữ 30 bản):
+
+```
+30 2 * * * /opt/aiphys/scripts/backup-db.sh >> /var/log/aiphys-backup.log 2>&1
+```
+
+Bản sao lưu nằm ở `/opt/aiphys/data/backups/`.
+
+**Nên làm thêm:** định kỳ tải bản sao lưu về máy của bạn, phòng khi VPS hỏng:
+
+```bash
+# Chạy trên máy cá nhân, không phải trên VPS
+scp root@123.45.67.89:/opt/aiphys/data/backups/app-2026-10-28.db ./backup.db
+```
+
+**Phục hồi khi có sự cố:**
+
+```bash
+cd /opt/aiphys
+docker compose down
+cp data/backups/app-2026-10-27.db data/app.db
+rm -f data/app.db-wal data/app.db-shm
+docker compose up -d
+```
+
+### 8.9. Xuất dữ liệu phục vụ nghiên cứu
+
+Đăng nhập bằng tài khoản admin → **Bảng điều khiển** → mục **Xuất dữ liệu**:
+
+| File | Nội dung |
+|------|----------|
+| `users-*.csv` | Mỗi người dùng: tổng thời gian, số phiên, số bài đã xong, tỉ lệ hoàn thành khoá |
+| `sessions-*.csv` | Từng phiên sử dụng: thời điểm mở, đóng, thời lượng, số heartbeat |
+| `lessons-*.csv` | Từng bài học của từng người: bắt đầu lúc nào, xong lúc nào |
+| `events-*.csv` | Sự kiện Module 2/3/4: tham số đã dùng, kết quả mô hình |
+
+File CSV có BOM UTF-8 nên mở bằng Excel hiển thị đúng tiếng Việt có dấu.
+
+### 8.10. Xử lý lỗi thường gặp khi triển khai
+
+**"Chứng chỉ HTTPS không lấy được"**
+
+Tên miền chưa trỏ đúng về IP, hoặc cổng 80/443 bị chặn. Kiểm tra:
+
+```bash
+ping your-domain.com          # phải ra IP của VPS
+ufw status                    # phải thấy 80/tcp và 443/tcp là ALLOW
+docker compose logs caddy | tail -30
+```
+
+**"502 Bad Gateway"**
+
+Container `app` chưa sẵn sàng. Kiểm tra:
+
+```bash
+docker compose ps
+docker compose logs app | tail -30
+```
+
+**Module 3/4 báo "Dịch vụ ML chưa sẵn sàng"**
+
+Container `ml` đang load model (mất 30–60 giây sau khi khởi động) hoặc bị hết RAM:
+
+```bash
+docker compose logs ml | tail -20
+free -h                       # xem còn bao nhiêu RAM trống
+```
+
+Nếu RAM đầy: nâng cấu hình VPS hoặc giảm `mem_limit` của service `ml` trong `docker-compose.yml`.
+
+**Build thất bại ở bước `npm ci`**
+
+`package-lock.json` bị lệch so với `package.json`. Chạy `npm install` ở máy local rồi commit lại `package-lock.json`.
+
+**Đã đổi tên miền nhưng vẫn ra tên miền cũ**
+
+Sửa `.env` rồi `docker compose up -d` (không cần `--build`).
+
+---
+
+*Cập nhật: 2026-10-28*

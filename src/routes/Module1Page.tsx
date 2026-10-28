@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ComponentType } from "react";
-import { Routes, Route, useParams, Link } from "react-router-dom";
+import { Routes, Route, useParams, Link, useNavigate } from "react-router-dom";
 import { Card } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
 import { ProgressRail } from "../components/ui/ProgressRail";
@@ -21,6 +21,7 @@ import Lesson11T2Cpmg from "./module1/Lesson11T2Cpmg";
 import { module1Lessons, phaseLabels, getLesson } from "../data/module1Lessons";
 import { getModule } from "../data/modules";
 import { getLessonKnowledge } from "../data/lessonKnowledge";
+import { useProgressStore } from "../progress/store";
 import { useT } from "../i18n/useT";
 
 const BASE_PATH = "/module-1/lesson";
@@ -111,26 +112,44 @@ function LessonRoute() {
 
 function Module1Shell({ lessonId }: { lessonId: string }) {
   const { t, tr } = useT();
+  const navigate = useNavigate();
   const lesson = getLesson(lessonId) ?? module1Lessons[0];
   const lessonExists = getLesson(lessonId) !== undefined;
 
-  const [started, setStarted] = useState<Set<string>>(() => new Set());
+  const progress = useProgressStore((s) => s.lessons);
+  const progressLoaded = useProgressStore((s) => s.loaded);
+  const loadProgress = useProgressStore((s) => s.load);
+  const markStarted = useProgressStore((s) => s.start);
+  const markComplete = useProgressStore((s) => s.complete);
+
   const [knowledgeOpen, setKnowledgeOpen] = useState(true);
+
+  // Tải tiến độ một lần khi vào Module 1 (nguồn sự thật ở server).
+  useEffect(() => {
+    if (!progressLoaded) void loadProgress();
+  }, [progressLoaded, loadProgress]);
 
   useEffect(() => {
     setKnowledgeOpen(true);
   }, [lessonId]);
 
-  const completed = started.size;
+  const completed = module1Lessons.filter((l) => progress[l.id]?.completedAt).length;
   const currentIndex = module1Lessons.findIndex((l) => l.id === lesson.id);
+  const isCompleted = Boolean(progress[lesson.id]?.completedAt);
 
   const knowledge = useMemo(() => getLessonKnowledge(lesson.id), [lesson.id]);
   const isAvailable = lesson.status === "available";
   const LessonComponent = isAvailable ? lessonComponents[lesson.id] : undefined;
 
   const handleStart = () => {
-    setStarted((prev) => new Set(prev).add(lesson.id));
+    void markStarted(lesson.id);
     setKnowledgeOpen(false);
+  };
+
+  const handleComplete = () => {
+    void markComplete(lesson.id);
+    const next = module1Lessons[currentIndex + 1];
+    if (next) navigate(`${BASE_PATH}/${next.id}`);
   };
 
   return (
@@ -160,6 +179,53 @@ function Module1Shell({ lessonId }: { lessonId: string }) {
           objective={tr(lesson.objective)}
           phase={tr(phaseLabels[lesson.phase])}
         />
+      )}
+
+      {/* Đánh dấu hoàn thành — tín hiệu tường minh, dùng làm dữ liệu nghiên cứu. */}
+      {lessonExists && isAvailable && (
+        <Card
+          style={{
+            padding: "var(--space-4)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "var(--space-4)",
+            flexWrap: "wrap",
+          }}
+        >
+          <div>
+            <p className="eyebrow" style={{ margin: 0 }}>
+              {t("module1.completeEyebrow")}
+            </p>
+            <p className="muted" style={{ margin: "var(--space-1) 0 0", fontSize: "0.92rem" }}>
+              {isCompleted ? t("module1.completedBody") : t("module1.completeBody")}
+            </p>
+          </div>
+          {isCompleted ? (
+            <span
+              className="mono"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                color: "var(--color-success-green)",
+                fontSize: "0.85rem",
+              }}
+            >
+              <span aria-hidden>✓</span>
+              {t("module1.completedLabel")}
+            </span>
+          ) : (
+            <Button
+              variant="primary"
+              size="md"
+              disabled={knowledgeOpen}
+              onClick={handleComplete}
+            >
+              {t("module1.completeBtn")}
+            </Button>
+          )}
+        </Card>
       )}
     </div>
   );

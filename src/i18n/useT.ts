@@ -8,7 +8,12 @@
  * - `locale`: locale hiện tại (cho logic rẽ nhánh/định dạng).
  *
  * Hook subscribe `locale` từ store → component re-render khi đổi ngôn ngữ.
+ *
+ * `t` và `tr` được bọc `useCallback` theo `locale` để giữ nguyên identity giữa
+ * các lần render. Không có điều này, mọi `useEffect(..., [t])` sẽ chạy lại sau
+ * mỗi render — từng gây vòng gọi API vô hạn ở trang quản trị.
  */
+import { useCallback } from "react";
 import { useLocaleStore } from "./store";
 import { type Locale, type LocalizedString } from "./types";
 import { vi } from "./locales/vi";
@@ -34,18 +39,23 @@ export interface T {
 
 export function useT(): T {
   const locale = useLocaleStore((s) => s.locale);
-  const dict = DICTS[locale];
-  const fallback = DICTS.vi;
 
-  const t = (key: string, vars?: Vars): string => {
-    const raw = dict[key] ?? fallback[key] ?? key;
-    return interpolate(raw, vars);
-  };
+  const t = useCallback(
+    (key: string, vars?: Vars): string => {
+      const dict = DICTS[locale];
+      const raw = dict[key] ?? DICTS.vi[key] ?? key;
+      return interpolate(raw, vars);
+    },
+    [locale],
+  );
 
-  const tr = (value: LocalizedString | string): string => {
-    if (typeof value === "string") return value;
-    return value[locale] ?? value.vi ?? "";
-  };
+  const tr = useCallback(
+    (value: LocalizedString | string): string => {
+      if (typeof value === "string") return value;
+      return value[locale] ?? value.vi ?? "";
+    },
+    [locale],
+  );
 
   return { t, tr, locale };
 }

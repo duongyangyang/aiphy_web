@@ -10,6 +10,7 @@ import { useT } from "../i18n/useT";
 import { LoadingSpinner } from "../components/learning/LoadingSpinner";
 import { Magnifier } from "../components/learning/Magnifier";
 import { superResolve, type SuperResolveResult } from "../ml-service/api";
+import { trackEvent } from "../tracking/events";
 
 type ViewMode = "sr" | "uncertainty";
 
@@ -34,6 +35,15 @@ export default function Module4Page() {
       const r = await superResolve(image, hqImage ?? undefined);
       setResult(r);
       setViewMode("sr");
+      // Sự kiện nghiên cứu: kích thước vào/ra và chất lượng đo được.
+      trackEvent("m4_run", "module-4", {
+        has_hq: hqImage !== null,
+        input_shape: r.input_shape,
+        output_shape: r.output_shape,
+        psnr: r.psnr,
+        ssim: r.ssim,
+        mean_uncertainty: r.mean_uncertainty,
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {

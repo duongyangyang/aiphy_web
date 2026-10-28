@@ -29,6 +29,14 @@ pnpm-debug.log*
 .env
 .env.local
 .env.*.local
+!.env.production.example
+
+# Dữ liệu runtime — KHÔNG commit database người dùng thật
+server/data/*.db
+server/data/*.db-wal
+server/data/*.db-shm
+server/data/backups/
+data/
 
 # Python ML
 ml_venv/

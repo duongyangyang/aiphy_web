@@ -1,24 +1,16 @@
-import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
-import { Button } from "../ui/Button";
-import { Modal } from "../ui/Modal";
-import { siteInfo } from "../../data/siteInfo";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { UserMenu } from "./UserMenu";
 import { useT } from "../../i18n/useT";
 
 /**
- * Header — logo + điều hướng 4 module + nút đăng nhập/đăng ký (demo).
- * Click Đăng nhập/Đăng ký mở modal thông báo bản demo chưa hỗ trợ.
+ * Header — logo + điều hướng 4 module + menu người dùng.
+ *
+ * Mọi route đều yêu cầu đăng nhập, nên header luôn có user; `UserMenu` tự ẩn
+ * nếu chưa đăng nhập (trang /login, /register).
  */
 export function Header() {
   const { t } = useT();
-  const [demoOpen, setDemoOpen] = useState(false);
-  const [demoMode, setDemoMode] = useState<"login" | "register">("login");
-
-  function openDemo(mode: "login" | "register") {
-    setDemoMode(mode);
-    setDemoOpen(true);
-  }
 
   return (
     <header
@@ -56,39 +48,9 @@ export function Header() {
 
         <div style={{ marginLeft: "auto", display: "flex", gap: "var(--space-3)", alignItems: "center", flexWrap: "wrap" }}>
           <LanguageSwitcher />
-          <div style={{ display: "flex", gap: "var(--space-2)" }}>
-            <Button variant="ghost" size="sm" onClick={() => openDemo("login")}>
-              {t("header.login")}
-            </Button>
-            <Button variant="secondary" size="sm" onClick={() => openDemo("register")}>
-              {t("header.register")}
-            </Button>
-          </div>
+          <UserMenu />
         </div>
       </div>
-
-      <Modal
-        open={demoOpen}
-        dismissible
-        onClose={() => setDemoOpen(false)}
-        labelledBy="demo-auth-title"
-      >
-        <p className="eyebrow">{t("header.demo")}</p>
-        <h2 id="demo-auth-title" style={{ marginTop: "var(--space-2)" }}>
-          {demoMode === "login" ? t("header.login") : t("header.register")}
-        </h2>
-        <p className="muted">
-          {demoMode === "login" ? t("header.demoBody.login") : t("header.demoBody.register")}
-        </p>
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: "var(--space-2)", marginTop: "var(--space-5)" }}>
-          <Button variant="secondary" size="sm" onClick={() => setDemoOpen(false)}>
-            {t("header.understood")}
-          </Button>
-        </div>
-        <p className="mono" style={{ fontSize: "0.72rem", color: "var(--color-faint)", marginTop: "var(--space-4)" }}>
-          {t("header.contact")}: {siteInfo.contact.email}
-        </p>
-      </Modal>
     </header>
   );
 }

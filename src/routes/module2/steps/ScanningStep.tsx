@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Card } from "../../../components/ui/Card";
 import { useModule2Store } from "../../../stores/module2Store";
 import { useT } from "../../../i18n/useT";
+import { trackEvent } from "../../../tracking/events";
 import {
   reconstructScan,
   scanDurationMs,
@@ -69,6 +70,19 @@ export function ScanningStep() {
           });
         }
         setDone(true);
+        // Sự kiện nghiên cứu: một loạt chụp hoàn tất với bộ tham số nào.
+        trackEvent("m2_scan", "module-2", {
+          TR: sequenceParams.TR,
+          TE: sequenceParams.TE,
+          FA: sequenceParams.FA,
+          TI: sequenceParams.TI,
+          sequence: sequenceParams.sequence,
+          matrixSize: sequenceParams.matrixSize,
+          bandwidth: sequenceParams.bandwidth,
+          nex: sequenceParams.nex,
+          sliceCount: count,
+          quality,
+        });
         // Nhẹ nhàng rồi sang Image processing.
         window.setTimeout(() => setStep("imageProcessing"), 500);
       }
