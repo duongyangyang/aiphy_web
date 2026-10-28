@@ -1,7 +1,10 @@
-# Caddy tự động xin và gia hạn chứng chỉ Let's Encrypt cho tên miền này.
-# Không cần cấu hình gì thêm — chỉ cần tên miền đã trỏ về IP của VPS và
-# cổng 80/443 đã mở.
-{$DOMAIN} {
+# Caddy phục web qua biến SITE_ADDRESS.
+#
+#   SITE_ADDRESS trống  → ":80"  → chạy thẳng bằng http://<IP> (chưa có tên miền)
+#   SITE_ADDRESS=domain.com → Caddy tự xin và gia hạn chứng chỉ Let's Encrypt
+#
+# Đổi cách chạy chỉ bằng cách sửa biến trong .env, không cần sửa file này.
+{$SITE_ADDRESS::80} {
 	encode zstd gzip
 
 	# Giới hạn kích thước request ở tầng proxy (phòng thủ chiều sâu).
@@ -16,6 +19,7 @@
 	}
 
 	header {
+		# HSTS chỉ có ý nghĩa khi đã bật HTTPS; vô hại khi chạy HTTP.
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
 		-Server
 	}

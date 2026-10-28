@@ -68,7 +68,9 @@ services:
       - "80:80"
       - "443:443"
     environment:
-      DOMAIN: ${DOMAIN}
+      # Trống → Caddy chạy http://<IP> trên cổng 80 (khi chưa có tên miền).
+      # Đặt thành tên miền → Caddy tự xin chứng chỉ HTTPS.
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
