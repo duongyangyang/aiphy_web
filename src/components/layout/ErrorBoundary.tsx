@@ -71,6 +71,41 @@ export class ErrorBoundary extends Component<Props, State> {
             <br />
             This page hit an error while rendering. Your learning data is safe.
           </p>
+
+          {/* Chi tiết lỗi: hiển thị để người vận hành chẩn đoán nhanh, không
+              phải mở console. Không lộ thông tin nhạy cảm — chỉ là thông báo
+              của runtime. */}
+          <details style={{ marginBottom: 20 }}>
+            <summary
+              style={{
+                cursor: "pointer",
+                fontFamily: "IBM Plex Mono, ui-monospace, monospace",
+                fontSize: "0.78rem",
+                color: "#5c7790",
+              }}
+            >
+              Chi tiết kỹ thuật / Technical detail
+            </summary>
+            <pre
+              style={{
+                marginTop: 10,
+                padding: 12,
+                borderRadius: 8,
+                background: "rgba(0,0,0,0.35)",
+                border: "1px solid rgba(234,246,248,0.14)",
+                color: "#ff9b9b",
+                fontFamily: "IBM Plex Mono, ui-monospace, monospace",
+                fontSize: "0.74rem",
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-word",
+                maxHeight: 180,
+                overflow: "auto",
+              }}
+            >
+              {String(this.state.error?.message ?? this.state.error)}
+            </pre>
+          </details>
+
           <button
             type="button"
             onClick={() => window.location.reload()}

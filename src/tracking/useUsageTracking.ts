@@ -29,6 +29,32 @@ export function moduleFromPath(pathname: string): string {
   return "other";
 }
 
+/**
+ * Sinh id phiên ngẫu nhiên.
+ *
+ * KHÔNG dùng thẳng `crypto.randomUUID()`: hàm đó chỉ tồn tại trong secure
+ * context (HTTPS hoặc localhost). Triển khai chạy http:// trên địa chỉ IP sẽ
+ * có `crypto.randomUUID === undefined` và ném TypeError ngay sau khi đăng nhập.
+ * `crypto.getRandomValues` thì có ở mọi ngữ cảnh, nên dùng nó để dựng UUID v4.
+ */
+function randomSessionId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  const bytes = new Uint8Array(16);
+  if (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function") {
+    crypto.getRandomValues(bytes);
+  } else {
+    // Cùng đường: môi trường không có Web Crypto. Chất lượng ngẫu nhiên chỉ ảnh
+    // hưởng việc gộp nhóm heartbeat, không phải bảo mật.
+    for (let i = 0; i < bytes.length; i++) bytes[i] = Math.floor(Math.random() * 256);
+  }
+  bytes[6] = (bytes[6] & 0x0f) | 0x40; // phiên bản 4
+  bytes[8] = (bytes[8] & 0x3f) | 0x80; // biến thể RFC 4122
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
 export function useUsageTracking(): void {
   const status = useAuthStore((s) => s.status);
   const location = useLocation();
@@ -45,26 +71,38 @@ export function useUsageTracking(): void {
   useEffect(() => {
     if (status !== "authed") return;
 
-    const sessionId = crypto.randomUUID();
+    let sessionId: string;
+    try {
+      sessionId = randomSessionId();
+    } catch {
+      // Đo thời lượng là tính năng phụ. Không có id thì bỏ qua phiên này,
+      // tuyệt đối không để nó làm sập giao diện.
+      return;
+    }
     sessionIdRef.current = sessionId;
 
     const beat = (end: boolean) => {
-      const body = JSON.stringify({
-        sessionId,
-        module: moduleRef.current,
-        ...(end ? { end: true } : {}),
-      });
-      // sendBeacon không gửi được header; dùng fetch với keepalive cho cả hai
-      // trường hợp để cookie phiên luôn được đính kèm.
-      void fetch("/api/track/heartbeat", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body,
-        keepalive: true,
-      }).catch(() => {
-        // Mất mạng thì bỏ qua — heartbeat sau sẽ bù.
-      });
+      // Bọc toàn bộ: đây là mã chạy nền, mọi lỗi ở đây đều phải bị nuốt.
+      try {
+        const body = JSON.stringify({
+          sessionId,
+          module: moduleRef.current,
+          ...(end ? { end: true } : {}),
+        });
+        // sendBeacon không gửi được header; dùng fetch với keepalive cho cả hai
+        // trường hợp để cookie phiên luôn được đính kèm.
+        void fetch("/api/track/heartbeat", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body,
+          keepalive: true,
+        }).catch(() => {
+          // Mất mạng thì bỏ qua — heartbeat sau sẽ bù.
+        });
+      } catch {
+        // Bỏ qua.
+      }
     };
 
     let timer: number | null = null;
